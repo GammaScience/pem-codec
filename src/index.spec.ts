@@ -9,11 +9,12 @@ import { encode, decode, PEM_message } from '.';
 
 // PEM cert with explanatory txt
 
-/*
-Subject: CN=Atlantis
+const cert_pre_header=`Subject: CN=Atlantis
 Issuer: CN=Atlantis
 Validity: from 7/9/2012 3:10:38 AM UTC to 7/9/2013 3:10:37 AM UTC
------BEGIN CERTIFICATE-----
+`;
+
+const cert=`-----BEGIN CERTIFICATE-----
 MIIBmTCCAUegAwIBAgIBKjAJBgUrDgMCHQUAMBMxETAPBgNVBAMTCEF0bGFudGlz
 MB4XDTEyMDcwOTAzMTAzOFoXDTEzMDcwOTAzMTAzN1owEzERMA8GA1UEAxMIQXRs
 YW50aXMwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAu+BXo+miabDIHHx+yquqzqNh
@@ -24,9 +25,10 @@ LjAsgBA0jOnSSuIHYmnVryHAdywMoRUwEzERMA8GA1UEAxMIQXRsYW50aXOCASow
 CQYFKw4DAh0FAANBAKi6HRBaNEL5R0n56nvfclQNaXiDT174uf+lojzA4lhVInc0
 ILwpnZ1izL4MlI9eCSHhVQBHEp2uQdXJB+d5Byg=
 -----END CERTIFICATE-----
-*/
-/*
------BEGIN PRIVACY-ENHANCED MESSAGE-----
+`;
+
+
+const pem_message_asym=`-----BEGIN PRIVACY-ENHANCED MESSAGE-----
 Proc-Type: 4,MIC-ONLY
 Content-Domain: RFC822
 Originator-Certificate:
@@ -57,12 +59,11 @@ MIC-Info: RSA-MD5,RSA,
 LSBBIG1lc3NhZ2UgZm9yIHVzZSBpbiB0ZXN0aW5nLg0KLSBGb2xsb3dpbmcgaXMg
 YSBibGFuayBsaW5lOg0KDQpUaGlzIGlzIHRoZSBlbmQuDQo=
 -----END PRIVACY-ENHANCED MESSAGE-----
-*/
+`;
 
 
 // Message (Symmetric Case)
-/*
------BEGIN PRIVACY-ENHANCED MESSAGE-----
+const pem_message_sym1 = `-----BEGIN PRIVACY-ENHANCED MESSAGE-----
 Proc-Type: 4,ENCRYPTED
 Content-Domain: RFC822
 DEK-Info: DES-CBC,F8143EDE5960C597
@@ -79,8 +80,9 @@ LLrHB0eJzyhP+/fSStdW8okeEnv47jxe7SJ/iN72ohNcUk2jHEUSoH1nvNSIWL9M
 J6UiRRGcDSvzrsoK+oNvqu6z7Xs5Xfz5rDqUcMlK1Z6720dcBWGGsDLpTpSCnpot
 dXd/H5LMDWnonNvPCwQUHt==
 -----END PRIVACY-ENHANCED MESSAGE-----
-*/
-/*
+`;
+
+const pem_message_sym2=`
 -----BEGIN PRIVACY-ENHANCED MESSAGE-----
 Proc-Type: 4,ENCRYPTED
 Content-Domain: RFC822
@@ -123,15 +125,20 @@ Key-Info: RSA,
 qeWlj/YJ2Uf5ng9yznPbtD0mYloSwIuV9FRYx+gzY+8iXd/NQrXHfi6/MhPfPF3d
 jIqCJAxvld2xgqQimUzoS1a4r7kQQ5c/Iua4LqKeq3ciFzEv/MbZhA==
 -----END PRIVACY-ENHANCED MESSAGE-----
-*/
+`;
+
+describe('the decode function ', () => {
+    it ('should throw an error including the string "invalid headers" if the headers are invalid');
+    it ('should throw an error including the string "Invalid data" if the data block isn\'t valid base64');
+    it ('should throw an error including the string "Mismatched types" if the type name and begin and end string of the armour do not match');
+    
+    it ('should return an object conforming to the PEM_message interface wi the base64 string decoded as the data attribute');
+    it ('should return an object conforming to the PEM_message interface with any enclosed headers listed as the header atribute');
+    it ('should return an object conforming to the PEM_message interface with any pre-pended headers listed as the pre-header atribute');
+    it ('should return an object conforming to the PEM_message interface with the trimmed text after the BEGIN excluded dashas the type atribute');
+});
 
 describe('the encode function ', () => {
-
-
-});
-describe('the decode function ', () => {
-
-
 });
 
 describe('the whole module ', () => {
@@ -145,10 +152,8 @@ describe('the whole module ', () => {
 
 
     it (' should be able to roundtrip data', () => {
-        const encoded_data = 'asdas';
+        const encoded_data = cert;
         expect(dec_enc_rt(encoded_data)).toBe(encoded_data);
-
-
     })
 
 });
