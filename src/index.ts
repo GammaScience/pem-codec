@@ -26,13 +26,17 @@ class PEM {
 }
 
 
-var DASHES = "-----";
+
+
+
+export function decode(msg: string) : PEM_message {
+    var DASHES = "-----";
 var OPEN = "BEGIN";
 var CLOSE = "END";
 var CR = '\\n';
-var HDR = '([^ ]+: ){1}(.+,$'+CR+' +)*(.+$){1}';
+var HDR = '([^ ]+: ){1}(.+$'+CR+' +)*(.+$){1}'+CR;
 var DATA = '(.*'+CR+')*';
-var BODY = '(((('+HDR+CR+'))*'+CR+')('+DATA+'){1})';
+var BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 var MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
     BODY+
     DASHES+CLOSE+' \\1'+DASHES;
@@ -41,10 +45,7 @@ var MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
 
 var header_regexp = new RegExp(HDR,'gm');
 var main_regexp = new RegExp( MAIN , 'g');
-
-
-export function decode(msg: string) : PEM_message {
-    let decoded_msg: PEM_message = new PEM();
+    var decoded_msg:PEM_message = new PEM();
     var vals;
     var parts;
     if ((vals = main_regexp.exec(msg)) != null){
@@ -66,8 +67,34 @@ export function decode(msg: string) : PEM_message {
     return decoded_msg;
 }
 
-export function encode(msg: PEM_message) : string {
-    let encoded_msg: string;
+export function encode(msg: PEM_message, max_width:number = 64) : string {
+    var DASHES = "-----";
+    var OPEN = "BEGIN";
+    var CLOSE = "END";
+    var CR = '\\n';
+    var HDR = '([^ ]+: ){1}(.+$'+CR+' +)*(.+$){1}'+CR;
+    var DATA = '(.*'+CR+')*';
+    var BODY = '(((('+HDR+'))*)('+DATA+'){1})';
+    var MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
+        BODY+
+        DASHES+CLOSE+' \\1'+DASHES;
+
+    var header_regexp = new RegExp(HDR,'gm');
+    var main_regexp = new RegExp( MAIN , 'g');
+
+
+    /**
+    * Split a string into chunks of the given size
+    * @param  {String} string is the String to split
+    * @param  {Number} size is the size you of the cuts
+    * @return {Array} an Array with the strings
+    */
+    function splitString (string, size) {
+	    var re = new RegExp('.{1,' + size + '}', 'g');
+	    return string.match(re);
+    }
+
+    var encoded_msg: string;
     var pre: string[] = [];
     var line;
     for (line in msg.pre_headers){
@@ -75,12 +102,23 @@ export function encode(msg: PEM_message) : string {
     }
     var hdr:string[] = [];
     for (line in msg.headers){
-        hdr.push((msg.headers[line]).toString());  // FIXME wrap line.value
+        hdr.push((msg.headers[line]).toString());  // FIXME wrap line.value ?
     }
     
-    var data:string = msg.data.toString();  // FIXME convert from int array to str representation
-
-    encoded_msg = [pre, DASHES + OPEN + ' ' + msg.type + DASHES, hdr, data, DASHES + CLOSE + ' ' + msg.type + DASHES].join('\n');
+    var base64String:string = btoa(String.fromCharCode.apply(null, msg.data));
+    var base64data:string = splitString(base64String ,max_width).join("\n");
+    var msg_parts = [] 
+    if(pre.length >0){
+        msg_parts.push(pre.join("\n"));
+    }
+    msg_parts.push( DASHES + OPEN + ' ' + msg.type + DASHES);
+    if( hdr.length > 0) {
+        msg_parts.push(hdr.join("\n"));
+    }
+    msg_parts.push(base64data);
+    msg_parts.push(DASHES + CLOSE + ' ' + msg.type + DASHES);
+    msg_parts.push('');
+    encoded_msg = msg_parts.join("\n");
     
     return encoded_msg;
 }
