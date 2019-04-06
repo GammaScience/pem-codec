@@ -18,10 +18,11 @@ class PEMh {
     }
     constructor( data: string[]) {
         this.name = data[HeaderParts.NAME];
-        this.value= data [HeaderParts.VALUE];
-        if (data.length >= HeaderParts.VALUE_CONTINUATION) {
-            this.value = data[HeaderParts.VALUE_CONTINUATION];
+        this.value = '';
+        if (data[HeaderParts.VALUE]) {
+            this.value += data[HeaderParts.VALUE].trimRight();
         }
+        this.value += data[HeaderParts.LAST_VALUE].trimRight();
     }
 }
 
@@ -36,7 +37,7 @@ const DASHES = "-----";
 const OPEN = "BEGIN";
 const CLOSE = "END";
 const CR = '\\n';
-const HDR = '([^ ]+: ){1}(.+'+CR+' +)*(.+){1}'+CR;
+const HDR = '(([^ ]+): ){1}(.+'+CR+' +)*(.+){1}'+CR;
 const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
 const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
@@ -53,14 +54,14 @@ enum MainParts {
     // Zero is total match
     MSG_TYPE = 1,
     HEADER   = 2,
-    BODY     = 9,
+    BODY     = 10,
 }
 
 enum HeaderParts {
     // Zero is total match
-    NAME = 1,
-    VALUE = 2,
-    VALUE_CONTINUATION = 3
+    NAME = 2,
+    VALUE = 3,
+    LAST_VALUE = 4
 }
 
 export function decode(msg: string) : PEM_message {
