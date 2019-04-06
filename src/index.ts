@@ -16,6 +16,13 @@ class PEMh {
     toString() {
         return this.name + ': ' + this.value; // FIXME - wrap name/value to N chars wide; breaking on commas
     }
+    constructor( data: string[]) {
+        this.name = data[HeaderParts.NAME];
+        this.value= data [HeaderParts.VALUE];
+        if (data.length >= HeaderParts.VALUE_CONTINUATION) {
+            this.value = data[HeaderParts.VALUE_CONTINUATION];
+        }
+    }
 }
 
 class PEM {
@@ -72,12 +79,8 @@ export function decode(msg: string) : PEM_message {
          */
         while ((hdr_parts = header_regexp.exec(doc_parts[MainParts.HEADER])) != null){
 
-            var hdr: PEM_header = new PEMh();
-            hdr.name = hdr_parts[HeaderParts.NAME];
-            hdr.value= [hdr_parts[HeaderParts.VALUE],
-                        hdr_parts[HeaderParts.VALUE_CONTINUATION]].join('') ;
+            decoded_msg.headers.push( new PEMh(hdr_parts));
 
-            decoded_msg.headers.push(hdr);
         }
 
         const encoded_body = doc_parts[MainParts.BODY];
