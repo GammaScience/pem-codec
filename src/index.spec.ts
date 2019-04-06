@@ -133,12 +133,20 @@ describe('the decode function ', () => {
     it ('should throw an error including the string "Mismatched types" if the type name and begin and end string of the armour do not match');
     
     it ('should extract the message type from the PEM message',() => {
-        const encoded_data = cert;
-        const data:PEM_message = decode(encoded_data);
-        expect(data.type).toBe('CERTIFICATE');
+        for ( const encoded_data of [ 
+                                    { in:cert, t:"CERTIFICATE" },
+                                    { in:pem_message_sym1, t:"PRIVACY-ENHANCED MESSAGE" },
+                                    ]){
+            const data:PEM_message = decode(encoded_data.in);
+            expect(data.type).toBe(encoded_data.t);
+        }
     });
     it ('should return an object conforming to the PEM_message interface wi the base64 string decoded as the data attribute');
-    it ('should return an object conforming to the PEM_message interface with any enclosed headers listed as the header atribute');
+    it ('should return an object conforming to the PEM_message interface with any enclosed headers listed as the header atribute', () =>{
+        const encoded_data = pem_message_sym1;
+        const data =decode(encoded_data);
+        expect(data.headers.length).toBe(8);
+    });
     it ('should return an object conforming to the PEM_message interface with any pre-pended headers listed as the pre-header atribute');
     it ('should return an object conforming to the PEM_message interface with the trimmed text after the BEGIN excluded dashas the type atribute');
 });
