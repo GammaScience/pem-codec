@@ -34,6 +34,7 @@ const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
 const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
     BODY +
+//    '('+ DATA +')'+
     DASHES+CLOSE+' \\1'+DASHES;
 
 
@@ -41,30 +42,51 @@ const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
 const header_regexp = new RegExp(HDR,'gm');
 const main_regexp = new RegExp( MAIN , 'g');
 
+enum MainParts {
+    // Zero is total match
+    MSG_TYPE = 1,
+    HEADER   = 2,
+    BODY     = 9,
+}
+
+enum HeaderParts {
+    // Zero is total match
+    NAME = 1,
+    VALUE = 2,
+    VALUE_CONTINUATION = 3
+}
 
 export function decode(msg: string) : PEM_message {
 
     var decoded_msg:PEM_message = new PEM();
-    var vals : RegExpExecArray;
-    var parts: RegExpExecArray;
+    var doc_parts : RegExpExecArray;
+    var hdr_parts: RegExpExecArray;
     // reset Regexp
     header_regexp.lastIndex = 0;
     main_regexp.lastIndex = 0;
 
-    if ((vals = main_regexp.exec(msg)) != null){
-        decoded_msg.type = vals[1];
-        while ((parts = header_regexp.exec(vals[2])) != null){
+    if ((doc_parts = main_regexp.exec(msg)) != null){
+        decoded_msg.type = doc_parts[MainParts.MSG_TYPE];
+         * Scan the headers extracted by the main regexp
+         */
+        while ((hdr_parts = header_regexp.exec(doc_parts[MainParts.HEADER])) != null){
+
             var hdr: PEM_header = new PEMh();
-            hdr.name = parts[1];
-            hdr.value= [parts[2],parts[3]].join('') ;
+            hdr.name = hdr_parts[HeaderParts.NAME];
+            hdr.value= [hdr_parts[HeaderParts.VALUE],
+                        hdr_parts[HeaderParts.VALUE_CONTINUATION]].join('') ;
+
             decoded_msg.headers.push(hdr);
         }
-        if (vals[9] !=null){
-            var raw = window.atob(vals[9]);
+
+        const encoded_body = doc_parts[MainParts.BODY];
+        if (encoded_body !=null){
+            var raw = window.atob(encoded_body);
             decoded_msg.data = Uint8Array.from(Array.prototype.map.call(raw,function(x) { 
                 return x.charCodeAt(0); 
             }));
        }
+
     }
     
     return decoded_msg;
