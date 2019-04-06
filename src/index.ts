@@ -25,18 +25,17 @@ class PEM {
     pre_headers:    Array<PEM_header> =new Array(); // may be empty
 }
 
-
-
-    var DASHES = "-----";
-var OPEN = "BEGIN";
-var CLOSE = "END";
-var CR = '\\n';
-var HDR = '([^ ]+: ){1}(.+$'+CR+' +)*(.+$){1}'+CR;
-var DATA = '(.*'+CR+')*';
-var BODY = '(((('+HDR+'))*)('+DATA+'){1})';
-var MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
+const DASHES = "-----";
+const OPEN = "BEGIN";
+const CLOSE = "END";
+const CR = '\\n';
+const HDR = '([^ ]+: ){1}(.+$'+CR+' +)*(.+$){1}'+CR;
+const DATA = '(.*'+CR+')*';
+const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
+const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
     BODY+
     DASHES+CLOSE+' \\1'+DASHES;
+
 
 
 const header_regexp = new RegExp(HDR,'gm');
@@ -46,11 +45,12 @@ const main_regexp = new RegExp( MAIN , 'g');
 export function decode(msg: string) : PEM_message {
 
     var decoded_msg:PEM_message = new PEM();
-    var vals;
-    var parts;
+    var vals : RegExpExecArray;
+    var parts: RegExpExecArray;
     // reset Regexp
     header_regexp.lastIndex = 0;
     main_regexp.lastIndex = 0;
+
     if ((vals = main_regexp.exec(msg)) != null){
         decoded_msg.type = vals[1];
         while ((parts = header_regexp.exec(vals[2])) != null){
