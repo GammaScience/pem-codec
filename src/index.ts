@@ -27,9 +27,6 @@ class PEM {
 
 
 
-
-
-export function decode(msg: string) : PEM_message {
     var DASHES = "-----";
 var OPEN = "BEGIN";
 var CLOSE = "END";
@@ -42,12 +39,18 @@ var MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
     DASHES+CLOSE+' \\1'+DASHES;
 
 
+const header_regexp = new RegExp(HDR,'gm');
+const main_regexp = new RegExp( MAIN , 'g');
 
-var header_regexp = new RegExp(HDR,'gm');
-var main_regexp = new RegExp( MAIN , 'g');
+
+export function decode(msg: string) : PEM_message {
+
     var decoded_msg:PEM_message = new PEM();
     var vals;
     var parts;
+    // reset Regexp
+    header_regexp.lastIndex = 0;
+    main_regexp.lastIndex = 0;
     if ((vals = main_regexp.exec(msg)) != null){
         decoded_msg.type = vals[1];
         while ((parts = header_regexp.exec(vals[2])) != null){
@@ -68,19 +71,6 @@ var main_regexp = new RegExp( MAIN , 'g');
 }
 
 export function encode(msg: PEM_message, max_width:number = 64) : string {
-    var DASHES = "-----";
-    var OPEN = "BEGIN";
-    var CLOSE = "END";
-    var CR = '\\n';
-    var HDR = '([^ ]+: ){1}(.+$'+CR+' +)*(.+$){1}'+CR;
-    var DATA = '(.*'+CR+')*';
-    var BODY = '(((('+HDR+'))*)('+DATA+'){1})';
-    var MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
-        BODY+
-        DASHES+CLOSE+' \\1'+DASHES;
-
-    var header_regexp = new RegExp(HDR,'gm');
-    var main_regexp = new RegExp( MAIN , 'g');
 
 
     /**
