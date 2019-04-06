@@ -78,24 +78,33 @@ export function decode(msg: string) : PEM_message {
     var decoded_msg:PEM_message = new PEM();
     var doc_parts : RegExpExecArray;
     var hdr_parts: RegExpExecArray;
-    // reset Regexp
-    header_regexp.lastIndex = 0;
-    while ((hdr_parts = header_regexp.exec(msg)) != null){
-            decoded_msg.pre_headers.push( new PEMh( hdr_parts ));
+
+    /**
+     * Function to read headers from a text object and pus them to 
+     * destination array.
+     * 
+     * @param {string} input Test to read headers from. Header
+     * @param dest Array to recieve headers.
+     */
+    function process_headers(input:string, dest: PEM_header[] ) :number {
+        // reset Regexp
+        header_regexp.lastIndex = 0;
+        while ((hdr_parts = header_regexp.exec(input)) != null){
+            dest.push( new PEMh( hdr_parts ));
+        }
+        return header_regexp.lastIndex;
     }
-    // Force main regexp to match from after the pre headers.
-    main_regexp.lastIndex = header_regexp.lastIndex;
+
+    /*
+     * Read any prepending headers nd set the body matcher
+     * to start at the index position following these
+     * headers
+     */
+    main_regexp.lastIndex = process_headers(msg, decoded_msg.pre_headers);
+    console.log("decoding...");
     if ((doc_parts = main_regexp.exec(msg)) != null){
         decoded_msg.type = doc_parts[MainParts.MSG_TYPE];
-        /*
-         * Scan the headers extracted by the main regexp
-         */
-        while ((hdr_parts = header_regexp.exec(doc_parts[MainParts.HEADER])) != null){
-
-            decoded_msg.headers.push( new PEMh(hdr_parts));
-
-        }
-
+        process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
         const encoded_body = doc_parts[MainParts.BODY];
         if (encoded_body !=null){
             var raw = window.atob(encoded_body);
