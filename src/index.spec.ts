@@ -136,7 +136,8 @@ describe('the decode function ', () => {
         for ( const encoded_data of [ 
                                     { in:cert, t:"CERTIFICATE" },
                                     { in:pem_message_sym1, t:"PRIVACY-ENHANCED MESSAGE" },
-                                    { in:pem_message_asym, t:"PRIVACY-ENHANCED MESSAGE" }
+                                    { in:pem_message_asym, t:"PRIVACY-ENHANCED MESSAGE" },
+                                    { in:cert_pre_header+cert, t:"CERTIFICATE" },
                                     ]){
             const data:PEM_message = decode(encoded_data.in);
             expect(data.type).toBe(encoded_data.t);
@@ -164,8 +165,18 @@ describe('the decode function ', () => {
         expect(data.headers[6].value).toBe('pem-dev@tis.com,ptf-kmc,4');
         expect(data.headers[7].value).toBe('DES-ECB,RSA-MD2,161A3F75DC82EF26,          E2EF532C65CBCFF79F83A2658132DB47');
     });
-    it ('should return an object conforming to the PEM_message interface with any pre-pended headers listed as the pre-header atribute');
-    it ('should return an object conforming to the PEM_message interface with the trimmed text after the BEGIN excluded dashas the type atribute');
+    it ('should return an object conforming to the PEM_message interface with any pre-pended headers listed as the pre-header atribute', () =>{
+        const encoded_data = cert_pre_header+cert;
+        const data =decode(encoded_data);
+        expect(data.pre_headers.length).toBe(3);
+        expect(data.pre_headers[0].name).toBe('Subject');
+        expect(data.pre_headers[1].name).toBe('Issuer');
+        expect(data.pre_headers[2].name).toBe('Validity');
+        expect(data.pre_headers[0].value).toBe('CN=Atlantis');
+        expect(data.pre_headers[1].value).toBe('CN=Atlantis');
+        expect(data.pre_headers[2].value).toBe('from 7/9/2012 3:10:38 AM UTC to 7/9/2013 3:10:37 AM UTC');
+ 
+    });
 });
 
 describe('the encode function ', () => {

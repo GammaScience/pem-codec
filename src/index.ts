@@ -80,8 +80,11 @@ export function decode(msg: string) : PEM_message {
     var hdr_parts: RegExpExecArray;
     // reset Regexp
     header_regexp.lastIndex = 0;
-    main_regexp.lastIndex = 0;
-
+    while ((hdr_parts = header_regexp.exec(msg)) != null){
+            decoded_msg.pre_headers.push( new PEMh( hdr_parts ));
+    }
+    // Force main regexp to match from after the pre headers.
+    main_regexp.lastIndex = header_regexp.lastIndex;
     if ((doc_parts = main_regexp.exec(msg)) != null){
         decoded_msg.type = doc_parts[MainParts.MSG_TYPE];
         /*
