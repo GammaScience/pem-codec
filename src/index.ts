@@ -29,11 +29,11 @@ const DASHES = "-----";
 const OPEN = "BEGIN";
 const CLOSE = "END";
 const CR = '\\n';
-const HDR = '([^ ]+: ){1}(.+$'+CR+' +)*(.+$){1}'+CR;
-const DATA = '(.*'+CR+')*';
+const HDR = '([^ ]+: ){1}(.+'+CR+' +)*(.+){1}'+CR;
+const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
 const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
-    BODY+
+    BODY +
     DASHES+CLOSE+' \\1'+DASHES;
 
 
