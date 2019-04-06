@@ -105,9 +105,14 @@ export function encode(msg: PEM_message, max_width:number = 64) : string {
     * @param  {Number} size is the size you of the cuts
     * @return {Array} an Array with the strings
     */
-    function splitString (string, size) {
-	    var re = new RegExp('.{1,' + size + '}', 'g');
-	    return string.match(re);
+    function splitString (str: string, size: number) :string[] {
+        console.log("split",str);
+        const re = new RegExp('.{1,' + size + '}', 'g');
+        const rv = str.match(re);
+        if ( ! rv ) {
+            return [''];
+        }
+        return rv;
     }
 
     var encoded_msg: string;

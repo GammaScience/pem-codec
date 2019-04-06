@@ -152,6 +152,15 @@ describe('the decode function ', () => {
 });
 
 describe('the encode function ', () => {
+    it('should encode even if the headers are undefined, and data is empty', () => {
+       const enc = encode({
+                    pre_headers: undefined, 
+                    headers: undefined,
+                    type: "SILLY TEST",
+                    data: new Uint8Array()
+                });
+        expect(enc).toBeTruthy();
+    })
 });
 
 describe('the whole module ', () => {
