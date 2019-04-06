@@ -136,6 +136,7 @@ describe('the decode function ', () => {
         for ( const encoded_data of [ 
                                     { in:cert, t:"CERTIFICATE" },
                                     { in:pem_message_sym1, t:"PRIVACY-ENHANCED MESSAGE" },
+                                    { in:pem_message_asym, t:"PRIVACY-ENHANCED MESSAGE" }
                                     ]){
             const data:PEM_message = decode(encoded_data.in);
             expect(data.type).toBe(encoded_data.t);
@@ -159,9 +160,9 @@ describe('the decode function ', () => {
         expect(data.headers[2].value).toBe('DES-CBC,F8143EDE5960C597');
         expect(data.headers[3].value).toBe('linn@zendia.enet.dec.com,,');
         expect(data.headers[4].value).toBe('linn@zendia.enet.dec.com,ptf-kmc,3');
-        expect(data.headers[5].value).toBe('DES-ECB,RSA-MD2,9FD3AAD2F2691B9A,B70665BB9BF7CBCDA60195DB94F727D3');
+        expect(data.headers[5].value).toBe('DES-ECB,RSA-MD2,9FD3AAD2F2691B9A,          B70665BB9BF7CBCDA60195DB94F727D3');
         expect(data.headers[6].value).toBe('pem-dev@tis.com,ptf-kmc,4');
-        expect(data.headers[7].value).toBe('DES-ECB,RSA-MD2,161A3F75DC82EF26,E2EF532C65CBCFF79F83A2658132DB47');
+        expect(data.headers[7].value).toBe('DES-ECB,RSA-MD2,161A3F75DC82EF26,          E2EF532C65CBCFF79F83A2658132DB47');
     });
     it ('should return an object conforming to the PEM_message interface with any pre-pended headers listed as the pre-header atribute');
     it ('should return an object conforming to the PEM_message interface with the trimmed text after the BEGIN excluded dashas the type atribute');

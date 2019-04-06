@@ -19,10 +19,19 @@ class PEMh {
     constructor( data: string[]) {
         this.name = data[HeaderParts.NAME];
         this.value = '';
+        /*
+         * These header are based on RFC822 header folding
+         * so we are trying to keep folded/indenting whitespace
+         * but we need to remove the orginal space after the colon
+         * on the first line. Luckily our regexps puts the folded
+         * space at the begining of a line at the right hand end
+         * of a part. So we can just trim left, then remove the CRLF
+         * as per RFC2822.
+         */
         if (data[HeaderParts.VALUE]) {
-            this.value += data[HeaderParts.VALUE].trimRight();
+            this.value += data[HeaderParts.VALUE].trimLeft().replace('\n','');
         }
-        this.value += data[HeaderParts.LAST_VALUE].trimRight();
+        this.value += data[HeaderParts.LAST_VALUE].trimLeft().replace('\n','');
     }
 }
 
@@ -37,7 +46,7 @@ const DASHES = "-----";
 const OPEN = "BEGIN";
 const CLOSE = "END";
 const CR = '\\n';
-const HDR = '(([^ ]+): ){1}(.+'+CR+' +)*(.+){1}'+CR;
+const HDR = '(([^ ]+):){1}(.*'+CR+'[\\t ]+)*(.+){1}'+CR;
 const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
 const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
