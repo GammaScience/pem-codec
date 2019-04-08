@@ -52,7 +52,7 @@ const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
     BODY +
 //    '('+ DATA +')'+
-    DASHES+CLOSE+' \\1'+DASHES;
+    DASHES+CLOSE+' (.+)'+DASHES;
 
 
 
@@ -64,6 +64,7 @@ enum MainParts {
     MSG_TYPE = 1,
     HEADER   = 2,
     BODY     = 10,
+    CLOSING_TYPE = 12,
 }
 
 enum HeaderParts {
@@ -92,6 +93,7 @@ export function decode(msg: string) : PEM_message {
         while ((hdr_parts = header_regexp.exec(input)) != null){
             dest.push( new PEMh( hdr_parts ));
         }
+
         return header_regexp.lastIndex;
     }
 
@@ -101,18 +103,31 @@ export function decode(msg: string) : PEM_message {
      * headers
      */
     main_regexp.lastIndex = process_headers(msg, decoded_msg.pre_headers);
-    console.log("decoding...");
     if ((doc_parts = main_regexp.exec(msg)) != null){
+        if (doc_parts[MainParts.MSG_TYPE] != doc_parts[MainParts.CLOSING_TYPE]) {
+            throw new Error(`Mismatched types in guard ${doc_parts[MainParts.MSG_TYPE]} <> ${doc_parts[MainParts.CLOSING_TYPE]}`);
+        }
         decoded_msg.type = doc_parts[MainParts.MSG_TYPE];
         process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
         const encoded_body = doc_parts[MainParts.BODY];
+
         if (encoded_body !=null){
-            var raw = window.atob(encoded_body);
+            console.log("EB",encoded_body);
+            try {
+                var raw = window.atob(encoded_body);
+            } catch (e) {
+                throw new Error("Invalid data:"+e.message);
+            }
             decoded_msg.data = Uint8Array.from(Array.prototype.map.call(raw,function(x) { 
                 return x.charCodeAt(0); 
             }));
        }
 
+    } else {
+        // The most likely reason the main regexp to fail is 
+        // invlaid headers; but incorrect base64 chars can cause
+        // it to 
+        throw new Error("Invalid data, invalid headers or malformed object");
     }
     
     return decoded_msg;

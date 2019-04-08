@@ -128,10 +128,51 @@ jIqCJAxvld2xgqQimUzoS1a4r7kQQ5c/Iua4LqKeq3ciFzEv/MbZhA==
 `;
 
 describe('the decode function ', () => {
-    it ('should throw an error including the string "invalid headers" if the headers are invalid');
-    it ('should throw an error including the string "Invalid data" if the data block isn\'t valid base64');
-    it ('should throw an error including the string "Mismatched types" if the type name and begin and end string of the armour do not match');
+    // Test some simple error conditions
+    it ('should throw an error including the string "Mismatched types" if the type name and begin and end string of the armour do not match', () =>{
+        expect( () =>{
+            decode(`-----BEGIN FOO-----
+qwertyui
+-----END BAR-----
+            `);
+        }).toThrowMatching(
+          (x) => { return  x.message.search('Mismatched types') != -1 }
+        );
+
+     });
+    it ('should throw an error including the string "invalid headers" if the headers are invalid',() =>{ 
+        // Just check one way the headers can be invalid for now.
+        expect( () =>{
+            const invalid = decode(`-----BEGIN FOO-----
+BlahBlah data
+
+qwertyui
+-----END FOO-----
+            `);
+            console.log("inv-h",invalid);
+        }).toThrowMatching(
+          (x) => { return  x.message.search('invalid headers') != -1 }
+        );
+
+
+    } );
+    it ('should throw an error including the string "Invalid data" if the data block isn\'t valid base64' ,() => {
+         expect( () =>{
+            const invalid = decode(`-----BEGIN FOO-----
+qwertyu@
+-----END FOO-----
+            `);
+            console.log("inv-d",invalid);
+        }).toThrowMatching(
+          (x) => { return  x.message.search('Invalid data') != -1 }
+        );
+
+
+       
+    });
     
+    
+    // Tests with valid inputs 
     it ('should extract the message type from the PEM message',() => {
         for ( const encoded_data of [ 
                                     { in:cert, t:"CERTIFICATE" },
@@ -143,7 +184,19 @@ describe('the decode function ', () => {
             expect(data.type).toBe(encoded_data.t);
         }
     });
-    it ('should return an object conforming to the PEM_message interface wi the base64 string decoded as the data attribute');
+    it ('should return an object conforming to the PEM_message interface wi the base64 string decoded as the data attributewith a valid pem messge' ,() =>  {
+        const data = '\x00\x01\x02ABCD';
+        const encoded_data = btoa(data);
+        const encoded_msg = `-----BEGIN FOO-----
+${encoded_data}
+-----END FOO-----
+        `;
+        const decoded = decode(encoded_msg);
+        expect(decoded.headers).toBeDefined();
+        expect(decoded.pre_headers).toBeDefined();
+        expect(decoded.type).toBe('FOO');
+        expect(decoded.data).toEqual(new Uint8Array([0,1,2,65,66,67,68]));
+    });
     it ('should return an object conforming to the PEM_message interface with any enclosed headers listed as the header atribute', () =>{
         const encoded_data = pem_message_sym1;
         const data =decode(encoded_data);
