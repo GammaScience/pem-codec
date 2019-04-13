@@ -80,7 +80,7 @@ export class PEM_message {
     string_data: string;
 
 
-    get data() : Uint8Array {
+    get binary_data() : Uint8Array {
         return Uint8Array.from(Array.prototype.map.call(this.string_data,function(x) { 
                     return x.charCodeAt(0); 
         }));
@@ -189,7 +189,7 @@ export function encode(msg: PEM_message, max_width:number = 64) : string {
         hdr.push((msg.headers[line]).toString());  // FIXME wrap line.value ?
     }
     
-    var base64String:string = btoa(String.fromCharCode.apply(null, msg.data));
+    var base64String:string = btoa(String.fromCharCode.apply(null, msg.binary_data));
     var base64data:string = splitString(base64String ,max_width).join("\n");
     var msg_parts = [] 
     if(pre.length >0){
