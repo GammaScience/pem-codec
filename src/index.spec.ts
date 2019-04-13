@@ -1,5 +1,5 @@
 // import { describe, it, expect  } from 'jasmine';
-import { encode, decode, PEM_message } from '.';
+import { encode, PEM_message } from '.';
 
 // Test message encodings follow.
 
@@ -131,7 +131,7 @@ describe('the decode function ', () => {
     // Test some simple error conditions
     it ('should throw an error including the string "Mismatched types" if the type name and begin and end string of the armour do not match', () =>{
         expect( () =>{
-            decode(`-----BEGIN FOO-----
+            PEM_message.decode(`-----BEGIN FOO-----
 qwertyui
 -----END BAR-----
             `);
@@ -143,7 +143,7 @@ qwertyui
     it ('should throw an error including the string "invalid headers" if the headers are invalid',() =>{ 
         // Just check one way the headers can be invalid for now.
         expect( () =>{
-            const invalid = decode(`-----BEGIN FOO-----
+            const invalid = PEM_message.decode(`-----BEGIN FOO-----
 BlahBlah data
 
 qwertyui
@@ -158,7 +158,7 @@ qwertyui
     } );
     it ('should throw an error including the string "Invalid data" if the data block isn\'t valid base64' ,() => {
          expect( () =>{
-            const invalid = decode(`-----BEGIN FOO-----
+            const invalid = PEM_message.decode(`-----BEGIN FOO-----
 qwertyu@
 -----END FOO-----
             `);
@@ -180,7 +180,7 @@ qwertyu@
                                     { in:pem_message_asym, t:"PRIVACY-ENHANCED MESSAGE" },
                                     { in:cert_pre_header+cert, t:"CERTIFICATE" },
                                     ]){
-            const data:PEM_message = decode(encoded_data.in);
+            const data:PEM_message = PEM_message.decode(encoded_data.in);
             expect(data.type).toBe(encoded_data.t);
         }
     });
@@ -191,7 +191,7 @@ qwertyu@
 ${encoded_data}
 -----END FOO-----
         `;
-        const decoded = decode(encoded_msg);
+        const decoded = PEM_message.decode(encoded_msg);
         expect(decoded.headers).toBeDefined();
         expect(decoded.pre_headers).toBeDefined();
         expect(decoded.type).toBe('FOO');
@@ -199,7 +199,7 @@ ${encoded_data}
     });
     it ('should return an object conforming to the PEM_message interface with any enclosed headers listed as the header atribute', () =>{
         const encoded_data = pem_message_sym1;
-        const data =decode(encoded_data);
+        const data =PEM_message.decode(encoded_data);
         expect(data.headers.length).toBe(8);
         expect(data.headers[0].name).toBe('Proc-Type');
         expect(data.headers[1].name).toBe('Content-Domain');
@@ -220,7 +220,7 @@ ${encoded_data}
     });
     it ('should return an object conforming to the PEM_message interface with any pre-pended headers listed as the pre-header atribute', () =>{
         const encoded_data = cert_pre_header+cert;
-        const data =decode(encoded_data);
+        const data =PEM_message.decode(encoded_data);
         expect(data.pre_headers.length).toBe(3);
         expect(data.pre_headers[0].name).toBe('Subject');
         expect(data.pre_headers[1].name).toBe('Issuer');
@@ -247,10 +247,10 @@ describe('the encode function ', () => {
 describe('the whole module ', () => {
 
     function dec_enc_rt(m: string): string {
-        return encode(decode(m));
+        return encode(PEM_message.decode(m));
     }
     function enc_dec_rt(m: PEM_message): PEM_message {
-        return decode(encode(m));
+        return PEM_message.decode(encode(m));
     }
 
 

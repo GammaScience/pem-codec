@@ -4,12 +4,7 @@ export interface PEM_header {
     name : string ;
     value: string;
 }
-export interface PEM_message {
-    type: string;
-    data:   Uint8Array;
-    headers:    Array<PEM_header> ;
-    pre_headers:    Array<PEM_header> ;
-}
+
 class PEMh {
     name: string;
     value: string;  // this is often a comma separated list
@@ -33,13 +28,6 @@ class PEMh {
         }
         this.value += data[HeaderParts.LAST_VALUE].trimLeft().replace('\n','');
     }
-}
-
-class PEM {
-    type: string;
-    data:   Uint8Array;
-    headers:    Array<PEM_header> =new Array(); // may be empty
-    pre_headers:    Array<PEM_header> =new Array(); // may be empty
 }
 
 const DASHES = "-----";
@@ -74,67 +62,80 @@ enum HeaderParts {
     LAST_VALUE = 4
 }
 
-export function decode(msg: string) : PEM_message {
 
-    var decoded_msg:PEM_message = new PEM();
-    var doc_parts : RegExpExecArray;
-    var hdr_parts: RegExpExecArray;
+export class PEM_message {
+    type: string;
+    data:   Uint8Array;
+    headers:    Array<PEM_header> ;
+    pre_headers:    Array<PEM_header> ;
 
-    /**
-     * Function to read headers from a text object and pus them to 
-     * destination array.
-     * 
-     * @param {string} input Test to read headers from. Header
-     * @param dest Array to recieve headers.
-     */
-    function process_headers(input:string, dest: PEM_header[] ) :number {
-        // reset Regexp
-        header_regexp.lastIndex = 0;
-        while ((hdr_parts = header_regexp.exec(input)) != null){
-            dest.push( new PEMh( hdr_parts ));
-        }
-
-        return header_regexp.lastIndex;
+    constructor() { 
+        this.headers = [];
+        this.pre_headers = [];
     }
 
-    /*
-     * Read any prepending headers nd set the body matcher
-     * to start at the index position following these
-     * headers
-     */
-    main_regexp.lastIndex = process_headers(msg, decoded_msg.pre_headers);
-    if ((doc_parts = main_regexp.exec(msg)) != null){
-        const begin_type = doc_parts[MainParts.OPENING_TYPE];
-        const end_type = doc_parts[MainParts.CLOSING_TYPE];
+    static decode(msg: string) : PEM_message {
 
-        if (begin_type != end_type) {
-            throw new Error( `Mismatched types in guard ${begin_type} <> ${end_type}`);
-        }
-        decoded_msg.type = begin_type;
+        var decoded_msg:PEM_message = new PEM_message();
+        var doc_parts : RegExpExecArray;
+        var hdr_parts: RegExpExecArray;
 
-        process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
-
-        const encoded_body = doc_parts[MainParts.BODY];
-        if (encoded_body !=null){
-            console.log("EB",encoded_body);
-            try {
-                var raw = window.atob(encoded_body);
-            } catch (e) {
-                throw new Error("Invalid data: "+e.message);
+        /**
+         * Function to read headers from a text object and pus them to 
+         * destination array.
+         * 
+         * @param {string} input Test to read headers from. Header
+         * @param dest Array to recieve headers.
+         */
+        function process_headers(input:string, dest: PEM_header[] ) :number {
+            // reset Regexp
+            header_regexp.lastIndex = 0;
+            while ((hdr_parts = header_regexp.exec(input)) != null){
+                dest.push( new PEMh( hdr_parts ));
             }
-            decoded_msg.data = Uint8Array.from(Array.prototype.map.call(raw,function(x) { 
-                return x.charCodeAt(0); 
-            }));
-       }
 
-    } else {
-        // The most likely reason the main regexp to fail is 
-        // invlaid headers; but incorrect base64 chars can cause
-        // it to 
-        throw new Error("Invalid data, invalid headers or malformed object");
+            return header_regexp.lastIndex;
+        }
+
+        /*
+        * Read any prepending headers nd set the body matcher
+        * to start at the index position following these
+        * headers
+        */
+        main_regexp.lastIndex = process_headers(msg, decoded_msg.pre_headers);
+        if ((doc_parts = main_regexp.exec(msg)) != null){
+            const begin_type = doc_parts[MainParts.OPENING_TYPE];
+            const end_type = doc_parts[MainParts.CLOSING_TYPE];
+
+            if (begin_type != end_type) {
+                throw new Error( `Mismatched types in guard ${begin_type} <> ${end_type}`);
+            }
+            decoded_msg.type = begin_type;
+
+            process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
+
+            const encoded_body = doc_parts[MainParts.BODY];
+            if (encoded_body !=null){
+                console.log("EB",encoded_body);
+                try {
+                    var raw = window.atob(encoded_body);
+                } catch (e) {
+                    throw new Error("Invalid data: "+e.message);
+                }
+                decoded_msg.data = Uint8Array.from(Array.prototype.map.call(raw,function(x) { 
+                    return x.charCodeAt(0); 
+                }));
+        }
+
+        } else {
+            // The most likely reason the main regexp to fail is 
+            // invlaid headers; but incorrect base64 chars can cause
+            // it to 
+            throw new Error("Invalid data, invalid headers or malformed object");
+        }
+        
+        return decoded_msg;
     }
-    
-    return decoded_msg;
 }
 
 export function encode(msg: PEM_message, max_width:number = 64) : string {
