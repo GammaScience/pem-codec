@@ -196,6 +196,7 @@ ${encoded_data}
         expect(decoded.pre_headers).toBeDefined();
         expect(decoded.type).toBe('FOO');
         expect(decoded.data).toEqual(new Uint8Array([0,1,2,65,66,67,68]));
+        expect(decoded.string_data).toEqual(data);
     });
     it ('should return an object conforming to the PEM_message interface with any enclosed headers listed as the header atribute', () =>{
         const encoded_data = pem_message_sym1;
@@ -238,7 +239,8 @@ describe('the encode function ', () => {
                     pre_headers: undefined, 
                     headers: undefined,
                     type: "SILLY TEST",
-                    data: new Uint8Array()
+                    data: new Uint8Array(),
+                    string_data: ''
                 });
         expect(enc).toBeTruthy();
     })

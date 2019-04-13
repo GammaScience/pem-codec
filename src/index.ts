@@ -78,6 +78,7 @@ export class PEM_message {
     data:   Uint8Array;
     headers:    Array<PEM_header> ;
     pre_headers:    Array<PEM_header> ;
+    string_data: string;
 
     constructor() { 
         this.headers = [];
@@ -137,11 +138,11 @@ export class PEM_message {
             if (encoded_body !=null){
                 console.log("EB",encoded_body);
                 try {
-                    var raw = window.atob(encoded_body);
+                    decoded_msg.string_data = window.atob(encoded_body);
                 } catch (e) {
                     throw new Error("Invalid data: "+e.message);
                 }
-                decoded_msg.data = Uint8Array.from(Array.prototype.map.call(raw,function(x) { 
+                decoded_msg.data = Uint8Array.from(Array.prototype.map.call(decoded_msg.string_data,function(x) { 
                     return x.charCodeAt(0); 
                 }));
         }
