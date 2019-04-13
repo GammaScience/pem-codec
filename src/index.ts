@@ -136,7 +136,6 @@ export class PEM_message {
 
             const encoded_body = doc_parts[MainParts.BODY];
             if (encoded_body !=null){
-                console.log("EB",encoded_body);
                 try {
                     decoded_msg.string_data = window.atob(encoded_body);
                 } catch (e) {
