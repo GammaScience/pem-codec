@@ -62,7 +62,17 @@ enum HeaderParts {
     LAST_VALUE = 4
 }
 
-
+/**
+ * Represents a PEM Formatted message or object.
+ * 
+ * A PEM Object has a type, binary data and two different
+ * optional locations for headers; either prepending
+ * or internal.
+ *  
+ * PEM format is commonly used for X509 certificates and OpenPGP
+ *  messages.
+ * 
+ */
 export class PEM_message {
     type: string;
     data:   Uint8Array;
@@ -74,6 +84,15 @@ export class PEM_message {
         this.pre_headers = [];
     }
 
+    /**
+     * Decode a PEM formatted object. 
+     * 
+     * Takes an 'ascii armoured' string representation of the object
+     * and return a new instance of PEM_message with the de-armoured 
+     * and de-serialised data.
+     *
+     * @param msg text representation of 'ascii armoured' message
+     */
     static decode(msg: string) : PEM_message {
 
         var decoded_msg:PEM_message = new PEM_message();
