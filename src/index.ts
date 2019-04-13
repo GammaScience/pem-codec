@@ -61,9 +61,9 @@ const main_regexp = new RegExp( MAIN , 'g');
 
 enum MainParts {
     // Zero is total match
-    MSG_TYPE = 1,
-    HEADER   = 2,
-    BODY     = 10,
+    OPENING_TYPE = 1,
+    HEADER       = 2,
+    BODY         = 10,
     CLOSING_TYPE = 12,
 }
 
@@ -104,19 +104,23 @@ export function decode(msg: string) : PEM_message {
      */
     main_regexp.lastIndex = process_headers(msg, decoded_msg.pre_headers);
     if ((doc_parts = main_regexp.exec(msg)) != null){
-        if (doc_parts[MainParts.MSG_TYPE] != doc_parts[MainParts.CLOSING_TYPE]) {
-            throw new Error(`Mismatched types in guard ${doc_parts[MainParts.MSG_TYPE]} <> ${doc_parts[MainParts.CLOSING_TYPE]}`);
-        }
-        decoded_msg.type = doc_parts[MainParts.MSG_TYPE];
-        process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
-        const encoded_body = doc_parts[MainParts.BODY];
+        const begin_type = doc_parts[MainParts.OPENING_TYPE];
+        const end_type = doc_parts[MainParts.CLOSING_TYPE];
 
+        if (begin_type != end_type) {
+            throw new Error( `Mismatched types in guard ${begin_type} <> ${end_type}`);
+        }
+        decoded_msg.type = begin_type;
+
+        process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
+
+        const encoded_body = doc_parts[MainParts.BODY];
         if (encoded_body !=null){
             console.log("EB",encoded_body);
             try {
                 var raw = window.atob(encoded_body);
             } catch (e) {
-                throw new Error("Invalid data:"+e.message);
+                throw new Error("Invalid data: "+e.message);
             }
             decoded_msg.data = Uint8Array.from(Array.prototype.map.call(raw,function(x) { 
                 return x.charCodeAt(0); 
