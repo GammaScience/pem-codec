@@ -75,11 +75,16 @@ enum HeaderParts {
  */
 export class PEM_message {
     type: string;
-    data:   Uint8Array;
     headers:    Array<PEM_header> ;
     pre_headers:    Array<PEM_header> ;
     string_data: string;
 
+
+    get data() : Uint8Array {
+        return Uint8Array.from(Array.prototype.map.call(this.string_data,function(x) { 
+                    return x.charCodeAt(0); 
+        }));
+    };
     constructor() { 
         this.headers = [];
         this.pre_headers = [];
@@ -141,10 +146,7 @@ export class PEM_message {
                 } catch (e) {
                     throw new Error("Invalid data: "+e.message);
                 }
-                decoded_msg.data = Uint8Array.from(Array.prototype.map.call(decoded_msg.string_data,function(x) { 
-                    return x.charCodeAt(0); 
-                }));
-        }
+            }
 
         } else {
             // The most likely reason the main regexp to fail is 
