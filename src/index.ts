@@ -62,6 +62,14 @@ enum HeaderParts {
     LAST_VALUE = 4
 }
 
+export interface PEM_Message_Info {
+    type: string;
+    headers?:    Array<PEM_header> ;
+    pre_headers?:    Array<PEM_header> ;
+    string_data?: string;
+    binary_data?: Uint8Array;
+};
+
 /**
  * Represents a PEM Formatted message or object.
  * 
@@ -73,7 +81,8 @@ enum HeaderParts {
  *  messages.
  * 
  */
-export class PEM_message {
+export class PEM_message implements PEM_Message_Info {
+
     type: string;
     headers:    Array<PEM_header> ;
     pre_headers:    Array<PEM_header> ;
@@ -85,9 +94,15 @@ export class PEM_message {
                     return x.charCodeAt(0); 
         }));
     };
-    constructor() { 
+    constructor(init: PEM_Message_Info ) { 
+        // Default required values.
         this.headers = [];
         this.pre_headers = [];
+        this.type = init.type;
+        
+        if (init.pre_headers) {
+            this.pre_headers = init.pre_headers;
+        }
     }
 
     /**
@@ -101,10 +116,9 @@ export class PEM_message {
      */
     static decode(msg: string) : PEM_message {
 
-        var decoded_msg:PEM_message = new PEM_message();
         var doc_parts : RegExpExecArray;
         var hdr_parts: RegExpExecArray;
-
+        var decoded_msg:PEM_message;
         /**
          * Function to read headers from a text object and pus them to 
          * destination array.
@@ -127,7 +141,8 @@ export class PEM_message {
         * to start at the index position following these
         * headers
         */
-        main_regexp.lastIndex = process_headers(msg, decoded_msg.pre_headers);
+        var pre_headers = new Array<PEM_header>();
+        main_regexp.lastIndex = process_headers(msg, pre_headers);
         if ((doc_parts = main_regexp.exec(msg)) != null){
             const begin_type = doc_parts[MainParts.OPENING_TYPE];
             const end_type = doc_parts[MainParts.CLOSING_TYPE];
@@ -135,7 +150,8 @@ export class PEM_message {
             if (begin_type != end_type) {
                 throw new Error( `Mismatched types in guard ${begin_type} <> ${end_type}`);
             }
-            decoded_msg.type = begin_type;
+            decoded_msg = new PEM_message({type: begin_type,
+                                           pre_headers:pre_headers});
 
             process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
 
@@ -157,52 +173,50 @@ export class PEM_message {
         
         return decoded_msg;
     }
+   
+    encode(max_width:number = 64) : string {
+               /**
+       * Split a string into chunks of the given size
+       * @param  {String} string is the String to split
+       * @param  {Number} size is the size you of the cuts
+       * @return {Array} an Array with the strings
+       */
+       function splitString (str: string, size: number) :string[] {
+           console.log("split",str);
+           const re = new RegExp('.{1,' + size + '}', 'g');
+           const rv = str.match(re);
+           if ( ! rv ) {
+               return [''];
+           }
+           return rv;
+       }
+       var encoded_msg: string;
+       var pre: string[] = [];
+       var line;
+       for (line in this.pre_headers){
+           pre.push( (this.pre_headers[line]).toString());  // FIXME wrap line.value
+       }
+       var hdr:string[] = [];
+       for (line in this.headers){
+           hdr.push((this.headers[line]).toString());  // FIXME wrap line.value ?
+       }
+       var base64String:string = btoa(this.string_data);
+       var base64data:string = splitString(base64String ,max_width).join("\n");
+       var msg_parts = [] 
+       if(pre && (pre.length >0)) {
+           msg_parts.push(pre.join("\n"));
+       }
+       msg_parts.push( DASHES + OPEN + ' ' + this.type + DASHES);
+       if(hdr && (hdr.length > 0)) {
+           msg_parts.push(hdr.join("\n"));
+       }
+       msg_parts.push(base64data);
+       msg_parts.push(DASHES + CLOSE + ' ' + this.type + DASHES);
+       msg_parts.push('');
+       encoded_msg = msg_parts.join("\n");
+           return encoded_msg;
+       
+    }
 }
 
-export function encode(msg: PEM_message, max_width:number = 64) : string {
 
-
-    /**
-    * Split a string into chunks of the given size
-    * @param  {String} string is the String to split
-    * @param  {Number} size is the size you of the cuts
-    * @return {Array} an Array with the strings
-    */
-    function splitString (str: string, size: number) :string[] {
-        console.log("split",str);
-        const re = new RegExp('.{1,' + size + '}', 'g');
-        const rv = str.match(re);
-        if ( ! rv ) {
-            return [''];
-        }
-        return rv;
-    }
-
-    var encoded_msg: string;
-    var pre: string[] = [];
-    var line;
-    for (line in msg.pre_headers){
-        pre.push( (msg.pre_headers[line]).toString());  // FIXME wrap line.value
-    }
-    var hdr:string[] = [];
-    for (line in msg.headers){
-        hdr.push((msg.headers[line]).toString());  // FIXME wrap line.value ?
-    }
-    
-    var base64String:string = btoa(String.fromCharCode.apply(null, msg.binary_data));
-    var base64data:string = splitString(base64String ,max_width).join("\n");
-    var msg_parts = [] 
-    if(pre.length >0){
-        msg_parts.push(pre.join("\n"));
-    }
-    msg_parts.push( DASHES + OPEN + ' ' + msg.type + DASHES);
-    if( hdr.length > 0) {
-        msg_parts.push(hdr.join("\n"));
-    }
-    msg_parts.push(base64data);
-    msg_parts.push(DASHES + CLOSE + ' ' + msg.type + DASHES);
-    msg_parts.push('');
-    encoded_msg = msg_parts.join("\n");
-    
-    return encoded_msg;
-}

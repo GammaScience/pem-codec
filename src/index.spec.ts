@@ -1,5 +1,5 @@
 // import { describe, it, expect  } from 'jasmine';
-import { encode, PEM_message } from '.';
+import {  PEM_message } from '.';
 
 // Test message encodings follow.
 
@@ -235,13 +235,13 @@ ${encoded_data}
 
 describe('the encode function ', () => {
     it('should encode even if the headers are undefined, and data is empty', () => {
-       const enc = encode({
+       const enc = new PEM_message({
                     pre_headers: undefined, 
                     headers: undefined,
                     type: "SILLY TEST",
                     binary_data: new Uint8Array(),
                     string_data: ''
-                });
+                }).encode();
         expect(enc).toBeTruthy();
     })
 });
@@ -249,10 +249,10 @@ describe('the encode function ', () => {
 describe('the whole module ', () => {
 
     function dec_enc_rt(m: string): string {
-        return encode(PEM_message.decode(m));
+        return PEM_message.decode(m).encode();
     }
     function enc_dec_rt(m: PEM_message): PEM_message {
-        return PEM_message.decode(encode(m));
+        return PEM_message.decode(m.encode());
     }
 
 
