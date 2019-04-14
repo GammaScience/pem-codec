@@ -17,6 +17,14 @@
     "codec"
   ],
   "author": "Gamma Science",
+  "homepage":"https://github.com/GammaScience/pem-codec#readme"  ,
+  "bugs": {
+    "url": "https://github.com/GammaScience/pem-codec/issues"
+   },
+   "repository": {
+     "type": "git",
+     "url": "git+https://github.com/GammaScience/pem-codec.git"
+   },
   "license": "GPL-3.0",
   "devDependencies": {
     "@types/jasmine": "^3.3.12",
