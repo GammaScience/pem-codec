@@ -235,31 +235,22 @@ export class PEM_message implements PEM_Message_Info {
            }
            return rv;
        }
-       var encoded_msg: string;
-       var pre: string[] = [];
-       var line;
-       for (line in this.pre_headers){
-           pre.push( (this.pre_headers[line]).encode(max_width)); 
+       var encoded_msg = "";
+       var hdr_o: PEM_header;
+       for (hdr_o of this.pre_headers){
+           encoded_msg += (hdr_o.encode(max_width) +"\n"); 
        }
-       var hdr:string[] = [];
-       for (line in this.headers){
-           hdr.push((this.headers[line]).encode(max_width)); 
+       encoded_msg += ( DASHES + OPEN + ' ' + this.type + DASHES + '\n');
+       for (hdr_o of  this.headers){
+           encoded_msg += (hdr_o.encode(max_width) +"\n"); 
        }
-       var base64String:string = btoa(this.string_data);
-       var base64data:string = splitString(base64String ,max_width).join("\n");
-       var msg_parts = [] 
-       if(pre && (pre.length >0)) {
-           msg_parts.push(pre.join("\n"));
+       if  (this.headers.length > 0) {
+           encoded_msg += '\n' //Add blank line
        }
-       msg_parts.push( DASHES + OPEN + ' ' + this.type + DASHES);
-       if(hdr && (hdr.length > 0)) {
-           msg_parts.push(hdr.join("\n"));
-       }
-       msg_parts.push(base64data);
-       msg_parts.push(DASHES + CLOSE + ' ' + this.type + DASHES);
-       msg_parts.push('');
-       encoded_msg = msg_parts.join("\n");
-           return encoded_msg;
+       var base64String = btoa(this.string_data);
+       encoded_msg += splitString(base64String ,max_width).join("\n");
+       encoded_msg +=( '\n'+ DASHES + CLOSE + ' ' + this.type + DASHES + '\n');
+       return encoded_msg;
        
     }
 }
