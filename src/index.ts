@@ -1,32 +1,22 @@
 
 
-export interface PEM_header {
-    name : string ;
-    value: string;
-}
-
-class PEMh {
+export class PEM_header {
     name: string;
     value: string;  // this is often a comma separated list
     toString() {
         return this.name + ': ' + this.value; // FIXME - wrap name/value to N chars wide; breaking on commas
     }
-    constructor( data: string[]) {
-        this.name = data[HeaderParts.NAME];
-        this.value = '';
+    constructor( header_txt: string ) {
+        const sep = header_txt.indexOf(':');
+
+        this.name = header_txt.slice(0,sep);
         /*
          * These header are based on RFC822 header folding
          * so we are trying to keep folded/indenting whitespace
          * but we need to remove the orginal space after the colon
-         * on the first line. Luckily our regexps puts the folded
-         * space at the begining of a line at the right hand end
-         * of a part. So we can just trim left, then remove the CRLF
-         * as per RFC2822.
+         * on the first line. We alsoe remove any final trailing space.
          */
-        if (data[HeaderParts.VALUE]) {
-            this.value += data[HeaderParts.VALUE].trimLeft().replace('\n','');
-        }
-        this.value += data[HeaderParts.LAST_VALUE].trimLeft().replace('\n','');
+        this.value = header_txt.slice(sep+1,).trim().replace(/\n/g,'');
     }
 }
 
@@ -35,6 +25,7 @@ const OPEN = "BEGIN";
 const CLOSE = "END";
 const CR = '\\n';
 const HDR = '(([^ ]+):){1}(.*'+CR+'[\\t ]+)*(.+){1}'+CR;
+//const DATA = '(.*'+CR+')*';
 const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
 const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
 const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
@@ -43,7 +34,7 @@ const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
     DASHES+CLOSE+' (.+)'+DASHES;
 
 
-
+// Global regexp's are these Thread safe?
 const header_regexp = new RegExp(HDR,'gm');
 const main_regexp = new RegExp( MAIN , 'g');
 
@@ -70,7 +61,12 @@ export interface PEM_Message_Info {
     binary_data?: Uint8Array;
 };
 
-/**
+// From SO 28975896
+function isDefined<T>(value: T | undefined | null): value is T {
+    return <T>value !== undefined && <T>value !== null;
+ }
+
+ /**
  * Represents a PEM Formatted message or object.
  * 
  * A PEM Object has a type, binary data and two different
@@ -95,14 +91,38 @@ export class PEM_message implements PEM_Message_Info {
         }));
     };
     constructor(init: PEM_Message_Info ) { 
+
+        // Check for error conditions in the data supplied
+        // (we don't check the existence of 'type' relying on the typechecking)
+        if (init.string_data && init.binary_data) {
+            throw new Error("Exactly one of binary_data or string_data should be supplied");
+        }
+
+        if (!isDefined(init.string_data) && !isDefined(init.binary_data)) {
+            throw new Error(`Exactly one of binary_data or string_data should be supplied:${init.string_data}, ${init.binary_data}`);
+        }
+
+
         // Default required values.
         this.headers = [];
         this.pre_headers = [];
+        this.string_data= "";
         this.type = init.type;
-        
+ 
+        // Load provided values.
         if (init.pre_headers) {
-            this.pre_headers = init.pre_headers;
+            this.pre_headers = init['pre_headers'];
         }
+        if (init.headers) {
+            this.headers = init.headers;
+        }
+        if (init.string_data) {
+            this.string_data = init.string_data;
+        }
+        if (init.binary_data) {
+            this.string_data = String.fromCharCode.apply(null, init.binary_data);
+        }
+ 
     }
 
     /**
@@ -130,7 +150,7 @@ export class PEM_message implements PEM_Message_Info {
             // reset Regexp
             header_regexp.lastIndex = 0;
             while ((hdr_parts = header_regexp.exec(input)) != null){
-                dest.push( new PEMh( hdr_parts ));
+                dest.push( new PEM_header( hdr_parts[0] ));
             }
 
             return header_regexp.lastIndex;
@@ -151,7 +171,8 @@ export class PEM_message implements PEM_Message_Info {
                 throw new Error( `Mismatched types in guard ${begin_type} <> ${end_type}`);
             }
             decoded_msg = new PEM_message({type: begin_type,
-                                           pre_headers:pre_headers});
+                                           pre_headers:pre_headers,
+                                           string_data:""});
 
             process_headers(doc_parts[MainParts.HEADER],decoded_msg.headers);
 

@@ -1,5 +1,5 @@
 // import { describe, it, expect  } from 'jasmine';
-import {  PEM_message } from '.';
+import {  PEM_message, PEM_header } from '.';
 
 // Test message encodings follow.
 
@@ -239,13 +239,76 @@ describe('the encode function ', () => {
                     pre_headers: undefined, 
                     headers: undefined,
                     type: "SILLY TEST",
-                    binary_data: new Uint8Array(),
+            //        binary_data: new Uint8Array(),
                     string_data: ''
                 }).encode();
         expect(enc).toBeTruthy();
     })
 });
 
+describe('the PEM Message class ', () => {
+    it('should fail to construct with no data',() => {
+        expect(()=>{
+            new PEM_message({type:'foo'});
+        }).toThrow();
+    });
+    it('should fail to construct if both data fields are defined', () =>{
+        expect(()=>{
+            new PEM_message({type:'foo', 
+                             string_data:'aaa', 
+                             binary_data: new Uint8Array([0,1,2])})
+        }).toThrow();
+    });
+    it('should set the headers values from the provided header value' ,() =>{
+         const tst_hdr = new PEM_header('bar: baz')
+         const msg = new PEM_message({type:'foo', 
+                             string_data:'aaa', 
+                             headers: [ tst_hdr ]
+                            })
+         expect(msg.headers.length).toBe(1);
+         expect(msg.headers[0]).toBe(tst_hdr);
+    });
+    it('should set the pre_headers values from the provided pre_header value',() =>{
+         const tst_hdr = new PEM_header('bar: baz')
+         const msg = new PEM_message({type:'foo', 
+                             string_data:'aaa', 
+                             pre_headers: [ tst_hdr ]
+                            })
+         expect(msg.pre_headers.length).toBe(1);
+         expect(msg.pre_headers[0]).toBe(tst_hdr);
+ 
+    });
+    it('should set the pre_headers values to the array if pred_headers are not supplied', ()=>{
+         const msg = new PEM_message({type:'foo', 
+                             string_data:'aaa', 
+                            })
+         expect(msg.pre_headers.length).toBe(0);
+    });
+    it('should set the headers values to the array if headers are not supplied', () => {
+          const msg = new PEM_message({type:'foo', 
+                             string_data:'aaa', 
+                            })
+         expect(msg.headers.length).toBe(0);
+        
+    });
+    it('should set the data from the provieded string_data value', () =>{
+        const msg = new PEM_message({type:'foo', 
+                             string_data:'aaa', 
+                            })
+         expect(msg.string_data).toBe('aaa');
+         expect(msg.binary_data).toEqual(new Uint8Array([97,97,97]));
+              
+    });
+    it('should set the data from the provieded binary_data value', () =>{
+         const msg = new PEM_message({type:'foo', 
+                             binary_data: new Uint8Array([1,2,3]), 
+                            })
+         expect(msg.string_data).toBe('\x01\x02\x03');
+         expect(msg.binary_data).toEqual(new Uint8Array([1,2,3]));
+        
+    });
+
+});
 describe('the whole module ', () => {
 
     function dec_enc_rt(m: string): string {
