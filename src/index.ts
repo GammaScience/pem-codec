@@ -6,6 +6,30 @@ export class PEM_header {
     toString() {
         return this.name + ': ' + this.value; // FIXME - wrap name/value to N chars wide; breaking on commas
     }
+    encode(max_width:number, ) : string {
+        // TODO  Extend the API to support breaking on 
+        // characters other than space 
+        const value = this.toString();
+        var rv =  new Array<string>();
+        var lastIndex = 0;
+        var commitedTo = 0;
+        var myexp = / /g;
+        var dummy:any;
+        while ((dummy= myexp.exec(value)) != null ) { 
+            if (myexp.lastIndex > max_width ) {
+                rv.push(value.slice(commitedTo,lastIndex));
+                commitedTo = lastIndex;
+            }
+            lastIndex = myexp.lastIndex
+        }
+        if ((commitedTo != lastIndex) && (value.length - commitedTo > max_width )) {
+                rv.push(value.slice(commitedTo,lastIndex));
+                commitedTo = lastIndex;
+        }
+        rv.push(value.slice(commitedTo));
+
+        return  rv.join('\n');
+    }
     constructor( header_txt: string ) {
         const sep = header_txt.indexOf(':');
 
@@ -215,11 +239,11 @@ export class PEM_message implements PEM_Message_Info {
        var pre: string[] = [];
        var line;
        for (line in this.pre_headers){
-           pre.push( (this.pre_headers[line]).toString());  // FIXME wrap line.value
+           pre.push( (this.pre_headers[line]).encode(max_width)); 
        }
        var hdr:string[] = [];
        for (line in this.headers){
-           hdr.push((this.headers[line]).toString());  // FIXME wrap line.value ?
+           hdr.push((this.headers[line]).encode(max_width)); 
        }
        var base64String:string = btoa(this.string_data);
        var base64data:string = splitString(base64String ,max_width).join("\n");

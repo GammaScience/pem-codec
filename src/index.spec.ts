@@ -332,6 +332,25 @@ describe('the encode function ', () => {
             expect(l.length).toBeLessThanOrEqual(60);
         }
     });
+    it('should encode wrapping the hedaers to the supplied length', () => { 
+        var hdr = new Array<PEM_header>();
+        hdr.push(new PEM_header("Header1: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789"))
+        hdr.push(new PEM_header("Header2: ABCDEFGHIJLKMNOPQ RSTUVWXYZ0123456789  ABCDEFGHIJLKMNOPQ RSTUVWXYZ0123456789"));
+        hdr.push(new PEM_header("Header3: ABCDEFGHIJLKMNOPQ,RSTUVWXYZ0123456789  ABCDEFGHIJLKMNOPQ,RSTUVWXYZ0123456789 ABCDEFGHIJLKMNOPQ,RSTUVWXYZ0123456789 "));
+        
+        const enc = new PEM_message({
+                    pre_headers: undefined, 
+                    headers: hdr,
+                    type: "SILLY TEST",
+                    string_data: 'abcdefgh'
+                }).encode(60);
+        const lines = enc.split('\n');
+        expect(lines.length).toBeGreaterThan(6);
+        for (const l of lines) {
+            expect(l.length).toBeLessThanOrEqual(60);
+        }
+
+    });
 
 });
 
