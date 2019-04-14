@@ -239,11 +239,100 @@ describe('the encode function ', () => {
                     pre_headers: undefined, 
                     headers: undefined,
                     type: "SILLY TEST",
-            //        binary_data: new Uint8Array(),
                     string_data: ''
                 }).encode();
         expect(enc).toBeTruthy();
     })
+
+    it('should encode and the binary portion should math the provided data', () => {
+       const enc = new PEM_message({
+                    pre_headers: undefined, 
+                    headers: undefined,
+                    type: "SILLY TEST",
+                    string_data: 'abcdefgh'
+                }).encode();
+        const lines = enc.split('\n');
+        /* Not the last line; Which is empty  (due to trailling \n)
+         * or the penaultimate line which is the armour but the line
+         * before that. So length -3
+         */
+        expect(lines[lines.length-3]).toBe(btoa('abcdefgh'));
+    });
+
+    it('should encode with armour lines which match the test', () => {
+       const enc = new PEM_message({
+                    pre_headers: undefined, 
+                    headers: undefined,
+                    type: "SILLY TEST",
+                    string_data: 'abcdefgh'
+                }).encode();
+        const lines = enc.split('\n');
+        expect(lines[0].indexOf("SILLY TEST")).toBe(11);
+        expect(lines[lines.length-2].indexOf("SILLY TEST")).toBe(9);
+    });
+
+    it('should encode with and included the preheaders before the armour line', ()=>{
+        var hdr = new Array<PEM_header>();
+        hdr.push(new PEM_header("Header1: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789"))
+        hdr.push(new PEM_header("Header2: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789  ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789"));
+        hdr.push(new PEM_header("Header3: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789  ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789 ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789 "));
+        
+        const enc = new PEM_message({
+                    pre_headers: hdr, 
+                    headers: undefined,
+                    type: "SILLY TEST",
+                    string_data: 'abcdefgh'
+                }).encode();
+        const lines = enc.split('\n');
+        var pos:number;
+        pos = lines[0].indexOf(":")
+        expect(lines[0].slice(0,pos)).toBe("Header1");
+        expect(lines[0].slice(pos+2)).toBe("ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789");
+        expect(lines[1].slice(0,pos)).toBe("Header2");
+ 
+
+    });
+    it('should encode with and included the headers after the armour line', () =>{
+        var hdr = new Array<PEM_header>();
+        hdr.push(new PEM_header("Header1: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789"))
+        hdr.push(new PEM_header("Header2: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789  ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789"));
+        hdr.push(new PEM_header("Header3: ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789  ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789 ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789 "));
+        
+        const enc = new PEM_message({
+                    pre_headers: undefined, 
+                    headers: hdr,
+                    type: "SILLY TEST",
+                    string_data: 'abcdefgh'
+                }).encode();
+        const lines = enc.split('\n');
+        var pos:number;
+        pos = lines[1].indexOf(":")
+        expect(lines[1].slice(0,pos)).toBe("Header1");
+        expect(lines[1].slice(pos+2)).toBe("ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789");
+        expect(lines[2].slice(0,pos)).toBe("Header2");
+
+    });
+    it('should encode wrapping the data to the supplied length', () => {
+        var data = '';
+        for (var i=0; i<100; i++) {
+            data += "ABCDEFGHIJLKMNOPQRSTUVWXYZ0123456789"
+        }
+        const enc = new PEM_message({
+                    pre_headers: undefined, 
+                    headers: undefined,
+                    type: "SILLY TEST",
+                    string_data: data
+                }).encode(60);
+        const lines = enc.split('\n');
+        expect(lines.length).toBeGreaterThan(80); // We have 3600 characters
+                                                  // and a line length of 60
+                                                  // but in fact tha is 45 characters of b64,
+                                                  // so we need 80 lines of data.
+        for (const l of lines) {i
+            expect(l.length).toBeLessThanOrEqual(60);
+        }
+    });
+
 });
 
 describe('the PEM Message class ', () => {
