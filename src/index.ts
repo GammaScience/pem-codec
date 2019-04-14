@@ -1,7 +1,23 @@
 
-
+/**
+ * A class to contain a PEM, or RFC822-like header name/value pair.
+ *
+ * The name value pair can be trivally constructed from a string
+ * representation of a single header. No collapsing of whitespace
+ * is attempted.
+ * 
+ * Once constructed a single line representation is availabe
+ * with toString(), or encode() can be use to get a linewrapped
+ * encoded version of the string.
+ */
 export class PEM_header {
+    /**
+     * The header name.
+     */
     name: string;
+    /**
+     * Unfolded value of the header
+     */
     value: string;  // this is often a comma separated list
     toString() {
         return this.name + ': ' + this.value; // FIXME - wrap name/value to N chars wide; breaking on commas
