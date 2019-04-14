@@ -101,6 +101,12 @@ export class PEM_message implements PEM_Message_Info {
         if (!isDefined(init.string_data) && !isDefined(init.binary_data)) {
             throw new Error(`Exactly one of binary_data or string_data should be supplied:${init.string_data}, ${init.binary_data}`);
         }
+        var that = this;
+        function init_field(fldname:string, ){
+            if (init[fldname]) {
+                that[fldname] = init[fldname];
+            }
+        }
 
 
         // Default required values.
@@ -110,15 +116,9 @@ export class PEM_message implements PEM_Message_Info {
         this.type = init.type;
  
         // Load provided values.
-        if (init.pre_headers) {
-            this.pre_headers = init['pre_headers'];
-        }
-        if (init.headers) {
-            this.headers = init.headers;
-        }
-        if (init.string_data) {
-            this.string_data = init.string_data;
-        }
+        init_field('pre_headers');
+        init_field('headers');
+        init_field('string_data');
         if (init.binary_data) {
             this.string_data = String.fromCharCode.apply(null, init.binary_data);
         }
