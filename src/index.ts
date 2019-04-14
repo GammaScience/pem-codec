@@ -1,4 +1,56 @@
 
+
+
+const DASHES = "-----";
+const OPEN = "BEGIN";
+const CLOSE = "END";
+const CR = '\\n';
+const HDR = '(([^ ]+):){1}(.*'+CR+'[\\t ]+)*(.+){1}'+CR;
+const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
+const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
+const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
+    BODY +
+    DASHES+CLOSE+' (.+)'+DASHES;
+
+enum MainParts {
+    // Zero is total match
+    OPENING_TYPE = 1,
+    HEADER       = 2,
+    BODY         = 10,
+    CLOSING_TYPE = 12,
+}
+
+/**
+ * Data interface for PEM message block
+ * 
+ * Optionally initialisation data forma PEM_message 
+ */
+export interface PEM_Message_Info {
+    /**
+     * Type of message specified in armour lines
+     */
+    type: string;
+    /**
+     * Header which occur immediately after the begin armour
+     * line.
+     */
+    headers?:    Array<PEM_header> ;
+    /**
+     * Header which occur immediatler before the begin armour
+     * line
+     */
+    pre_headers?:    Array<PEM_header> ;
+    /**
+     * Binary data of the mesasge as a string.
+     */
+    string_data?: string;
+    /**
+     * Binary data of the message as a Uint8Array.
+     */
+    binary_data?: Uint8Array;
+};
+
+
 /**
  * A class to contain a PEM, or RFC822-like header name/value pair.
  *
@@ -59,48 +111,6 @@ export class PEM_header {
         this.value = header_txt.slice(sep+1,).trim().replace(/\n/g,'');
     }
 }
-
-const DASHES = "-----";
-const OPEN = "BEGIN";
-const CLOSE = "END";
-const CR = '\\n';
-const HDR = '(([^ ]+):){1}(.*'+CR+'[\\t ]+)*(.+){1}'+CR;
-//const DATA = '(.*'+CR+')*';
-const DATA = '([A-Za-z0-9=+/]*'+CR+')*';
-const BODY = '(((('+HDR+'))*)('+DATA+'){1})';
-const MAIN =  DASHES+OPEN+' (.+)'+DASHES+CR+
-    BODY +
-//    '('+ DATA +')'+
-    DASHES+CLOSE+' (.+)'+DASHES;
-
-
-// Global regexp's are these Thread safe?
-const header_regexp = new RegExp(HDR,'gm');
-const main_regexp = new RegExp( MAIN , 'g');
-
-enum MainParts {
-    // Zero is total match
-    OPENING_TYPE = 1,
-    HEADER       = 2,
-    BODY         = 10,
-    CLOSING_TYPE = 12,
-}
-
-enum HeaderParts {
-    // Zero is total match
-    NAME = 2,
-    VALUE = 3,
-    LAST_VALUE = 4
-}
-
-export interface PEM_Message_Info {
-    type: string;
-    headers?:    Array<PEM_header> ;
-    pre_headers?:    Array<PEM_header> ;
-    string_data?: string;
-    binary_data?: Uint8Array;
-};
-
 // From SO 28975896
 function isDefined<T>(value: T | undefined | null): value is T {
     return <T>value !== undefined && <T>value !== null;
@@ -188,7 +198,7 @@ export class PEM_message implements PEM_Message_Info {
          */
         function process_headers(input:string, dest: PEM_header[] ) :number {
             // reset Regexp
-            header_regexp.lastIndex = 0;
+            const header_regexp = new RegExp(HDR,'gm');
             while ((hdr_parts = header_regexp.exec(input)) != null){
                 dest.push( new PEM_header( hdr_parts[0] ));
             }
@@ -202,6 +212,8 @@ export class PEM_message implements PEM_Message_Info {
         * headers
         */
         var pre_headers = new Array<PEM_header>();
+
+        const main_regexp = new RegExp( MAIN , 'g');
         main_regexp.lastIndex = process_headers(msg, pre_headers);
         if ((doc_parts = main_regexp.exec(msg)) != null){
             const begin_type = doc_parts[MainParts.OPENING_TYPE];
@@ -236,7 +248,7 @@ export class PEM_message implements PEM_Message_Info {
     }
    
     encode(max_width:number = 64) : string {
-               /**
+       /**
        * Split a string into chunks of the given size
        * @param  {String} string is the String to split
        * @param  {Number} size is the size you of the cuts
@@ -252,13 +264,13 @@ export class PEM_message implements PEM_Message_Info {
            return rv;
        }
        var encoded_msg = "";
-       var hdr_o: PEM_header;
-       for (hdr_o of this.pre_headers){
-           encoded_msg += (hdr_o.encode(max_width) +"\n"); 
+       var header: PEM_header;
+       for (header of this.pre_headers){
+           encoded_msg += (header.encode(max_width) +"\n"); 
        }
        encoded_msg += ( DASHES + OPEN + ' ' + this.type + DASHES + '\n');
-       for (hdr_o of  this.headers){
-           encoded_msg += (hdr_o.encode(max_width) +"\n"); 
+       for (header of  this.headers){
+           encoded_msg += (header.encode(max_width) +"\n"); 
        }
        if  (this.headers.length > 0) {
            encoded_msg += '\n' //Add blank line
