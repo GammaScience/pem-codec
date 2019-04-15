@@ -5,11 +5,11 @@ to encode and decode PEM style ascii armoured data.
 
 The could be a PEM message, a openGPG message or a
 X509 certificate or key. All of these types of
-objects use the same basice data format and can shar this 
+objects use the same basic data format and can share this 
 module.
 
 
-PEM Codec has no dependencies on the browser environmant apart
+PEM Codec has no dependencies on the browser environment apart
 from the atob/btoa Base64 funtions.
 
 A PEM_Message object can be initialised as simply as
