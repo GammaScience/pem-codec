@@ -1,3 +1,6 @@
+## If you are editing this file consider if you need
+#  to add your changes to npmignore as well
+
 dist/*
 .*/
 node_modules/
