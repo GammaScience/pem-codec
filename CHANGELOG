@@ -1,0 +1,13 @@
+0.1.2
+-----
+Fix npm-pack file inclusion control; so all built files are included
+
+0.1.1
+-----
+Fix typo's in the README
+
+
+0.1.0
+-----
+
+Initial release 
