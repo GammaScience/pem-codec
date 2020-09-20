@@ -9,7 +9,8 @@
   "source": "src/index.ts",
   "scripts": {
     "test": "karma start",
-    "build": "microbundle"
+    "build": "microbundle",
+    "citest": "karma start --single-run --browsers ChromeHeadless"
   },
   "keywords": [
     "pem",

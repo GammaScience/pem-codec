@@ -2,7 +2,6 @@
 #  to add your changes to npmignore as well
 
 dist/*
-.*/
 node_modules/
 coverage/
 *~
