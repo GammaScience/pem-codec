@@ -1,5 +1,7 @@
 # PEM Codec
 
+[![Unittests](https://github.com/GammaScience/pem-codec/actions/workflows/unittest.yml/badge.svg)](https://github.com/GammaScience/pem-codec/actions/workflows/unittest.yml)
+
 A pure JS module intended primarily for use in the browser, 
 to encode and decode PEM style ascii armoured data.
 
