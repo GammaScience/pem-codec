@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 12.8
       - run: npm ci
-      - run: npm citest
+      - run: npm run-script citest
 
   publish-npm:
     needs: build
