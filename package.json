@@ -1,6 +1,6 @@
 {
   "name": "pem-codec",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Utility for encoding and decoding PEM ascii-armoured data streams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
